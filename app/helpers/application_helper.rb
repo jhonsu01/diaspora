@@ -7,6 +7,16 @@ module ApplicationHelper
     AppConfig.settings.pod_name.present? ? AppConfig.settings.pod_name : "DIASPORA*"
   end
 
+  def pod_version
+    AppConfig.version.number.present? ? AppConfig.version.number : ""
+  end
+
+  def changelog_url
+    url = "https://github.com/diaspora/diaspora/blob/master/Changelog.md"
+    url.sub!('/master/', "/#{AppConfig.git_revision}/") if AppConfig.git_revision.present?
+    url
+  end
+
   def how_long_ago(obj)
     timeago(obj.created_at)
   end

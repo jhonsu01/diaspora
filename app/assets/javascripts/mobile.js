@@ -7,6 +7,8 @@
 //= require mbp-respond.min
 //= require mbp-helper
 //= require jquery.autoSuggest.custom
+//= require fileuploader-custom
+
 $(document).ready(function(){
 
   $('.shield a').click(function(){
