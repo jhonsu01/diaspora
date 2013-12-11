@@ -7,7 +7,9 @@ app.views.StreamPost = app.views.Post.extend({
     ".likes" : "likesInfoView",
     ".comments" : "commentStreamView",
     ".post-content" : "postContentView",
-    ".oembed" : "oEmbedView"
+    ".oembed" : "oEmbedView",
+    ".opengraph" : "openGraphView",
+    ".status-message-location" : "postLocationStreamView"
   },
 
   events: {
@@ -20,7 +22,7 @@ app.views.StreamPost = app.views.Post.extend({
     "click .block_user": "blockUser"
   },
 
-  tooltipSelector : ".timeago, .delete, .block_user, .post_scope, .ignore",
+  tooltipSelector : ".timeago, .post_scope, .block_user, .delete",
 
   initialize : function(){
     this.model.bind('remove', this.remove, this);
@@ -28,6 +30,7 @@ app.views.StreamPost = app.views.Post.extend({
     //subviews
     this.commentStreamView = new app.views.CommentStream({model : this.model});
     this.oEmbedView = new app.views.OEmbed({model : this.model});
+    this.openGraphView = new app.views.OpenGraph({model : this.model});
   },
 
 
@@ -45,6 +48,10 @@ app.views.StreamPost = app.views.Post.extend({
       , postClass = app.views[normalizedClass] || app.views.StatusMessage;
 
     return new postClass({ model : this.model })
+  },
+
+  postLocationStreamView : function(){
+    return new app.views.LocationStream({ model : this.model});
   },
 
   removeNsfwShield: function(evt){

@@ -11,6 +11,8 @@ class ApplicationController < ActionController::Base
   before_filter :set_diaspora_header
   before_filter :set_grammatical_gender
   before_filter :mobile_switch
+  before_filter :gon_set_current_user
+  before_filter :gon_set_preloads
 
   inflection_method :grammatical_gender => :gender
 
@@ -21,6 +23,8 @@ class ApplicationController < ActionController::Base
                 :tag_followings,
                 :tags,
                 :open_publisher
+
+  layout ->(c) { request.format == :mobile ? "application" : "centered_with_header_with_footer" }
 
   private
 
@@ -65,7 +69,7 @@ class ApplicationController < ActionController::Base
 
   def set_diaspora_header
     headers['X-Diaspora-Version'] = AppConfig.version_string
-    
+
     if AppConfig.git_available?
       headers['X-Git-Update'] = AppConfig.git_update if AppConfig.git_update.present?
       headers['X-Git-Revision'] = AppConfig.git_revision if AppConfig.git_revision.present?
@@ -132,6 +136,19 @@ class ApplicationController < ActionController::Base
   end
 
   def current_user_redirect_path
-    current_user.getting_started? ? getting_started_path : root_path
+    current_user.getting_started? ? getting_started_path : stream_path
   end
+
+  def gon_set_current_user
+    return unless user_signed_in?
+    a_ids = session[:a_ids] || []
+    user = UserPresenter.new(current_user, a_ids)
+    gon.push({:user => user})
+  end
+
+  def gon_set_preloads
+    return unless gon.preloads.nil?
+    gon.preloads = {}
+  end
+
 end

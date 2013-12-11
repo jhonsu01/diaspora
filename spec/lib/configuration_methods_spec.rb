@@ -61,10 +61,12 @@ describe Configuration::Methods do
       services.stub(:twitter).and_return(enabled)
       services.stub(:tumblr).and_return(enabled)
       services.stub(:facebook).and_return(disabled)
+      services.stub(:wordpress).and_return(disabled)
       @settings.stub(:services).and_return(services)
       @settings.configured_services.should include :twitter
       @settings.configured_services.should include :tumblr
       @settings.configured_services.should_not include :facebook
+      @settings.configured_services.should_not include :wordpress
     end
   end
   
@@ -95,14 +97,14 @@ describe Configuration::Methods do
     end
   end
   
-  describe "#get_redis_instance" do
+  describe "#get_redis_options" do
     context "with REDISTOGO_URL set" do
       before do
         ENV["REDISTOGO_URL"] = "redis://myserver"
       end
       
       it "uses that" do
-        @settings.get_redis_instance.client.host.should == "myserver"
+        @settings.get_redis_options[:url].should match "myserver"
       end
     end
     
@@ -113,7 +115,7 @@ describe Configuration::Methods do
       end
       
       it "uses that" do
-        @settings.get_redis_instance.client.host.should == "yourserver"
+        @settings.get_redis_options[:url].should match "yourserver"
       end
     end
     
@@ -125,19 +127,7 @@ describe Configuration::Methods do
       end
       
       it "uses that" do
-        @settings.get_redis_instance.client.host.should == "ourserver"
-      end
-    end
-    
-    context "with nothing set" do
-      before do
-        @settings.environment.redis = nil
-        ENV["REDISTOGO_URL"] = nil
-        ENV["REDIS_URL"] = nil
-      end
-      
-      it "uses localhost" do  
-        @settings.get_redis_instance.client.host.should == "127.0.0.1"
+        @settings.get_redis_options[:url].should match "ourserver"
       end
     end
     
@@ -149,7 +139,26 @@ describe Configuration::Methods do
       end
       
       it "uses that" do
-        @settings.get_redis_instance.client.path.should == "/tmp/redis.sock"
+        @settings.get_redis_options[:url].should match "/tmp/redis.sock"
+      end
+    end
+  end
+
+  describe "sidekiq_log" do
+    context "with a relative log set" do
+      it "joins that with Rails.root" do
+        path = "/some/path/"
+        Rails.stub!(:root).and_return(stub(join: path))
+        @settings.environment.sidekiq.log = "relative_path"
+        @settings.sidekiq_log.should match path
+      end
+    end
+
+    context "with a absolute path" do
+      it "just returns that" do
+        path = "/foobar.log"
+        @settings.environment.sidekiq.log = path
+        @settings.sidekiq_log.should == path
       end
     end
   end

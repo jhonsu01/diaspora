@@ -22,7 +22,8 @@ module User::Connecting
     if notification = Notification.where(:target_id => person.id).first
       notification.update_attributes(:unread=>false)
     end
-
+    
+    deliver_profile_update
     register_share_visibilities(contact)
     contact
   end
@@ -40,11 +41,13 @@ module User::Connecting
     nil
   end
 
-  def remove_contact(contact, opts={:force => false})
+  def remove_contact(contact, opts={:force => false, :retracted => false})
     posts = contact.posts.all
 
     if !contact.mutual? || opts[:force]
       contact.destroy
+    elsif opts[:retracted]
+      contact.update_attributes(:sharing => false)
     else
       contact.update_attributes(:receiving => false)
     end
@@ -64,7 +67,7 @@ module User::Connecting
   def disconnected_by(person)
     Rails.logger.info("event=disconnected_by user=#{diaspora_handle} target=#{person.diaspora_handle}")
     if contact = self.contact_for(person)
-      remove_contact(contact)
+      remove_contact(contact, :retracted => true)
     end
   end
 end

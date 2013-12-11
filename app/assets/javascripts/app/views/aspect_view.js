@@ -3,20 +3,16 @@ app.views.Aspect = app.views.Base.extend({
 
   tagName: "li",
 
-  initialize: function(){
-    if (this.model.get('selected')){
-      this.$el.addClass('active');
-    };
-  },
+  className: 'hoverable',
 
   events: {
-    'click a.aspect_selector': 'toggleAspect'
+    'click .icons-check_yes_ok+a': 'toggleAspect'
   },
 
-  toggleAspect: function(evt){
+  toggleAspect: function(evt) {
     if (evt) { evt.preventDefault(); };
-    this.$el.toggleClass('active');
     this.model.toggleSelected();
+    this.$el.find('.icons-check_yes_ok').toggleClass('selected');
     app.router.aspects_stream();
   },
 

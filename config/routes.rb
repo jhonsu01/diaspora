@@ -2,11 +2,17 @@
 #   licensed under the Affero General Public License version 3 or later.  See
 #   the COPYRIGHT file.
 
+require 'sidekiq/web'
+
 Diaspora::Application.routes.draw do
   if Rails.env.production?
     mount RailsAdmin::Engine => '/admin_panel', :as => 'rails_admin'
   end
 
+  constraints ->(req) { req.env["warden"].authenticate?(scope: :user) &&
+                        req.env['warden'].user.admin? } do
+    mount Sidekiq::Web => '/sidekiq', :as => 'sidekiq'
+  end
 
   get "/atom.xml" => redirect('http://blog.diasporafoundation.org/feed/atom') #too many stupid redirects :()
 
@@ -55,14 +61,12 @@ Diaspora::Application.routes.draw do
 
   get 'bookmarklet' => 'status_messages#bookmarklet'
 
-  resources :photos, :except => [:index] do
+  resources :photos, :except => [:index, :show] do
     put :make_profile_photo
   end
 
-  # ActivityStreams routes
-  scope "/activity_streams", :module => "activity_streams", :as => "activity_streams" do
-    resources :photos, :controller => "photos", :only => [:create]
-  end
+	#Search
+	get 'search' => "search#search"
 
   resources :conversations do
     resources :messages, :only => [:create, :show]
@@ -203,13 +207,27 @@ Diaspora::Application.routes.draw do
 
   get 'mobile/toggle', :to => 'home#toggle_mobile', :as => 'toggle_mobile'
 
-  #Protocol Url
-  get 'protocol' => redirect("https://github.com/diaspora/diaspora/wiki/Diaspora%27s-federation-protocol")
-
-  # Resque web
-  if AppConfig.admins.inline_resque_web?
-    mount Resque::Server.new, :at => '/resque-jobs', :as => "resque_web"
+  # Help
+  get 'help' => 'help#getting_help', :as => 'faq_getting_help'
+  
+  scope path: "/help/faq", :controller => :help, :as => 'faq' do
+    get :account_and_data_management
+    get :aspects
+    get :mentions
+    get :miscellaneous
+    get :pods
+    get :posts_and_posting
+    get :private_posts
+    get :private_profiles
+    get :public_posts
+    get :public_profiles
+    get :resharing_posts
+    get :sharing
+    get :tags
   end
+
+  #Protocol Url
+  get 'protocol' => redirect("http://wiki.diasporafoundation.org/Federation_Protocol_Overview")
 
   # Startpage
   root :to => 'home#show'

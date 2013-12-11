@@ -1,4 +1,4 @@
-#   Copyright (c) 2010-2012, Diaspora Inc.  This file is
+#   Copyright (c) 2010-2013, Diaspora Inc.  This file is
 #   licensed under the Affero General Public License version 3 or later.  See
 #   the COPYRIGHT file.
 
@@ -16,6 +16,7 @@ de:
       invalid: "Ungültiger Benutzername oder ungültiges Kennwort."
       invalid_token: "Ungültiger Authentifizierungstoken."
       locked: "Dein Konto ist gesperrt."
+      not_found_in_database: "Passwort oder E-Mail-Adresse ungültig"
       timeout: "Deine Sitzung ist abgelaufen! Um fortzufahren, melde dich bitte erneut an."
       unauthenticated: "Du musst dich anmelden oder registrieren, um fortzufahren."
       unconfirmed: "Du musst dein Konto bestätigen, um fortzufahren."

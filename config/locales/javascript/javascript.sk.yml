@@ -1,4 +1,4 @@
-#   Copyright (c) 2010-2012, Diaspora Inc.  This file is
+#   Copyright (c) 2010-2013, Diaspora Inc.  This file is
 #   licensed under the Affero General Public License version 3 or later.  See
 #   the COPYRIGHT file.
 
@@ -11,6 +11,7 @@ sk:
       add_to_aspect: "Pridať kontakt"
       all_aspects: "Všetky kategórie"
       error: "<%= name %> sa nedá pridať do tvojich kontaktov. Neignoruješ ho (ju)?"
+      error_remove: "<%= name %> sa nedá odstrániť z kategórie :("
       select_aspects: "Vyber si kategórie"
       started_sharing_with: "<%= name %> bol(a) pridaný (-á) do tvojich kontaktov!"
       stopped_sharing_with: "<%= name %> bol(a) vymazaný (-á) z tvojich kontaktov."
@@ -29,6 +30,8 @@ sk:
       hide: "Skryť komentáre"
       show: "Zobraziť všetky komentáre"
     confirm_dialog: "Určite?"
+    conversation:
+      participants: "Účastníci"
     delete: "Odstrániť"
     edit: "Upraviť"
     failed_to_like: "Nepodarilo sa označiť, že sa ti to páči!"
@@ -56,6 +59,7 @@ sk:
     ignore_user: "Ignorovať tohto používateľa?"
     infinite_scroll:
       no_more: "Žiadne ďalšie príspevky."
+      no_more_contacts: "Žiadne ďalšie kontakty."
     my_activity: "Moja aktivita"
     my_aspects: "Moje kategórie"
     my_stream: "Nástenka"
@@ -63,10 +67,14 @@ sk:
       not_found: "...a nikto sa nenašiel."
     photo_uploader:
       completed: "<%= file %> hotovo"
+      empty: "Súbor {file} je prázdny; vyber, prosím, znova všetky súbory okrem tohto."
+      invalid_ext: "Súbor {file} má neplatnú príponu. Povolené sú len prípony {extensions}."
       looking_good: "No teda, vyzeráš super!"
+      size_error: "Súbor {file} je príliš veľký, maximálna povolená veľkosť je {sizeLimit}."
     publisher:
       at_least_one_aspect: "Musíš publikovať aspoň jednu kategóriu"
       limited: "Vyhradený – tvoj príspevok uvidia len ľudia, s ktorými sa oň podelíš"
+      near_from: "Blízko obce:<%= location %>"
       public: "Verejný – tvoj príspevok pomocou vyhľadávačov uvidí a nájde každý"
     reshares:
       duplicate: "Je to dobré, čo? O tento príspevok si sa už raz znova podelil(a)!"

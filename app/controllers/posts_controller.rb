@@ -2,8 +2,6 @@
 #   licensed under the Affero General Public License version 3 or later.  See
 #   the COPYRIGHT file.
 
-require Rails.root.join("app", "presenters", "post_presenter")
-
 class PostsController < ApplicationController
   include PostsHelper
 
@@ -11,7 +9,7 @@ class PostsController < ApplicationController
   before_filter :set_format_if_malformed_from_status_net, :only => :show
   before_filter :find_post, :only => [:show, :next, :previous, :interactions]
 
-  layout 'post'
+  before_filter -> { @css_framework = :bootstrap }
 
   respond_to :html,
              :mobile,
@@ -20,7 +18,7 @@ class PostsController < ApplicationController
 
   rescue_from Diaspora::NonPublic do |exception|
     respond_to do |format|
-      format.all { render :template=>'errors/not_public', :status=>404 }
+      format.all { @css_framework = :bootstrap; render :template=>'errors/not_public', :status=>404, :layout => "application"}
     end
   end
 
@@ -28,9 +26,9 @@ class PostsController < ApplicationController
     mark_corresponding_notifications_read if user_signed_in?
 
     respond_to do |format|
-      format.html{ gon.post = PostPresenter.new(@post, current_user); render 'posts/show' }
+      format.html{ gon.post = PostPresenter.new(@post, current_user); render 'posts/show', layout: 'with_header_with_footer' }
       format.xml{ render :xml => @post.to_diaspora_xml }
-      format.mobile{render 'posts/show', :layout => "application"}
+      format.mobile{render 'posts/show' }
       format.json{ render :json => PostPresenter.new(@post, current_user) }
     end
   end

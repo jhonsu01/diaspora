@@ -41,8 +41,10 @@ en:
       at_least_one_aspect: "You must publish to at least one aspect"
       limited: "Limited - your post will only be seen by people you are sharing with"
       public: "Public - your post will be visible to everyone and found by search engines"
+      near_from: "Posted from: <%= location %>"
     infinite_scroll:
       no_more: "No more posts."
+      no_more_contacts: "No more contacts."
     aspect_dropdown:
       add_to_aspect: "Add contact"
       select_aspects: "Select aspects"
@@ -61,6 +63,7 @@ en:
     comments:
       show: "show all comments"
       hide: "hide comments"
+      no_comments: "There are no comments yet."
     reshares:
       duplicate: "That good, huh?  You've already reshared that post!"
       successful: "The post was successfully reshared!"
@@ -78,10 +81,16 @@ en:
     photo_uploader:
       looking_good: "OMG, you look awesome!"
       completed: "<%= file %> completed"
+      invalid_ext: "{file} has invalid extension. Only {extensions} are allowed."
+      size_error: "{file} is too large, maximum file size is {sizeLimit}."
+      empty: "{file} is empty, please select files again without it."
     tags:
       wasnt_that_interesting: "OK, I suppose #<%= tagName %> wasn't all that interesting..."
     people:
       not_found: "and no one was found..."
+
+    conversation:
+      participants: "Participants"
 
     stream:
       hide: "Hide"
@@ -129,6 +138,7 @@ en:
       profile: "Profile"
       contacts: "Contacts"
       settings: "Settings"
+      help: "Help"
       admin: "Admin"
       log_out: "Log out"
 

@@ -1,4 +1,4 @@
-#   Copyright (c) 2010-2012, Diaspora Inc.  This file is
+#   Copyright (c) 2010-2013, Diaspora Inc.  This file is
 #   licensed under the Affero General Public License version 3 or later.  See
 #   the COPYRIGHT file.
 
@@ -45,7 +45,7 @@ es:
       correlations: "Similitudes"
       pages: "Páginas"
       pod_stats: "Estadísticas del Servidor"
-      resque_overview: "Información de Resque"
+      sidekiq_monitor: "Monitor Sidekiq"
       user_search: "Buscar usuario"
       weekly_user_stats: "Estadísticas Semanales del Usuario"
     correlations:
@@ -80,6 +80,7 @@ es:
     user_search:
       add_invites: "añadir invitaciones"
       email_to: "Correo electrónico a invitar"
+      under_13: "Mostrar usuarios menores de 13 años (COPPA)"
       users:
         one: "se ha encontrado %{count} usuario"
         other: "se han encontrado %{count} usuarios"
@@ -285,6 +286,8 @@ es:
     two: "%{count} contactos"
     zero: "contactos"
   conversations:
+    conversation:
+      participants: "Participantes"
     create:
       fail: "Mensaje no válido"
       no_contact: "¡Eh, primero tienes que añadir al contacto!"
@@ -366,6 +369,7 @@ es:
       resend: "Reenviar"
       send_an_invitation: "Enviar una invitación"
       send_invitation: "Enviar invitación"
+      sending_invitation: "Enviando invitación..."
       to: "Para"
   layouts:
     application:
@@ -526,6 +530,7 @@ es:
       edit_membership: "editar aspectos asociados"
     few: "%{count} personas"
     helper:
+      is_sharing: "%{name} está compartiendo contigo"
       people_on_pod_are_aware_of: "la gente que está en el POD es consciente de"
       results_for: "resultados para %{params}"
     index:
@@ -736,6 +741,7 @@ es:
       logged_in_as: "conectado como"
       no_services: "Aún no has conectado ningún servicio."
       really_disconnect: "¿Desconectar %{service}?"
+      services_explanation: "Conectar con servicios que ofrece la posibilidad de publicar sus mensajes a medida que se escriben en Diaspora."
     inviter:
       click_link_to_accept_invitation: "Sigue este enlace para aceptar tu invitación"
       join_me_on_diaspora: "Nos vemos en DIASPORA*."
@@ -793,6 +799,7 @@ es:
       all: "todo"
       all_contacts: "todos los contactos"
       discard_post: "Descartar publicación"
+      get_location: "Obtener tu localización"
       make_public: "hacer público"
       new_user_prefill:
         hello: "#%{new_user_tag}, acabo de llegar aquí. "
@@ -801,6 +808,7 @@ es:
         newhere: "Hola"
       post_a_message_to: "Publicar un mensaje en %{aspect}"
       posting: "Publicando..."
+      preview: "Vista previa"
       publishing_to: "publicar en:"
       share: "Compartir"
       share_with: "compartir con"

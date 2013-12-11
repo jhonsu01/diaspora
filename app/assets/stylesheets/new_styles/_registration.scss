@@ -1,16 +1,11 @@
 #registration {
-  position : absolute;
-  top : 0;
-  left : 0;
+  position:absolute;
+  min-width: 100%;
+  min-height: 100%;
   background-color : #afc652;
-  min-height : 100%;
-  min-width : 100%;
-
-  color : #fff;
-
-  .container {
-    margin-top : 100px;
-  }
+  color: #fff;
+  
+  .container { margin-top: 50px; }
 
   #create-something-text {
     font-family : Roboto-Light;
@@ -36,7 +31,6 @@
   #collage {
     width : 344px;
     height : auto;
-
     max-width : 95%;
   }
 

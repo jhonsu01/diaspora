@@ -2,7 +2,6 @@
 -#   licensed under the Affero General Public License version 3 or later.  See
 -#   the COPYRIGHT file.
 
-
 - content_for :page_title do
   - if @stream.tag_name
     = @stream.display_tag_name
@@ -13,7 +12,7 @@
 - content_for :body_class do
   = "tags_show"
 
-.span-6.tags_people
+#leftNavBar
   %h3
     = t('people', :count => @stream.tagged_people_count)
 
@@ -22,7 +21,7 @@
 
   %br
 
-  .section
+  - if user_signed_in?
     = render "tags/followed_tags_listings"
 
 .span-15.last
@@ -42,4 +41,7 @@
     #main_stream.stream
 
     #paginate
+      %span.loader.hidden
 
+  %a{:id=>"back-to-top", :title=>"#{t('layouts.application.back_to_top')}", :href=>"#"}
+    &#8679;

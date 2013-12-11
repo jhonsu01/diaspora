@@ -3,8 +3,6 @@
 #   the COPYRIGHT file.
 
 class Photo < ActiveRecord::Base
-  require 'carrierwave/orm/activerecord'
-
   include Diaspora::Federated::Shareable
   include Diaspora::Commentable
   include Diaspora::Shareable
@@ -43,7 +41,6 @@ class Photo < ActiveRecord::Base
   validates_associated :status_message
   delegate :author_name, to: :status_message, prefix: true
 
-  attr_accessible :text, :pending
   validate :ownership_of_status_message
 
   before_destroy :ensure_user_picture
@@ -71,7 +68,7 @@ class Photo < ActiveRecord::Base
   end
 
   def self.diaspora_initialize(params = {})
-    photo = self.new params.to_hash
+    photo = self.new params.to_hash.slice(:text, :pending)
     photo.author = params[:author]
     photo.public = params[:public] if params[:public]
     photo.pending = params[:pending] if params[:pending]
@@ -129,7 +126,7 @@ class Photo < ActiveRecord::Base
   end
 
   def queue_processing_job
-    Resque.enqueue(Jobs::ProcessPhoto, self.id)
+    Workers::ProcessPhoto.perform_async(self.id)
   end
 
   def mutable?

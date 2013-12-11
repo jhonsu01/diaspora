@@ -36,8 +36,14 @@ describe User::Connecting do
 
     describe '#disconnected_by' do
       it 'calls remove contact' do
-        bob.should_receive(:remove_contact).with(bob.contact_for(alice.person))
+        bob.should_receive(:remove_contact).with(bob.contact_for(alice.person), :retracted => true)
         bob.disconnected_by(alice.person)
+      end
+
+      it 'removes contact sharing flag' do
+        bob.contacts.find_by_person_id(alice.person.id).should be_sharing
+        bob.disconnected_by(alice.person)
+        bob.contacts.find_by_person_id(alice.person.id).should_not be_sharing
       end
 
       it 'removes notitications' do
@@ -146,6 +152,13 @@ describe User::Connecting do
 
         contact.should_not_receive(:dispatch_request)
         alice.share_with(eve.person, a2)
+      end
+
+      it 'posts profile' do
+        m = mock()
+        Postzord::Dispatcher.should_receive(:build).twice.and_return(m)
+        m.should_receive(:post).twice
+        alice.share_with(eve.person, alice.aspects.first)
       end
     end
 

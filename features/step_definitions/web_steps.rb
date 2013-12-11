@@ -4,13 +4,17 @@
 # instead of editing this one. Cucumber will automatically load all features/**/*.rb
 # files.
 
-require 'uri'
-require 'cgi'
 require File.expand_path(File.join(File.dirname(__FILE__), "..", "support", "paths"))
 
 module WithinHelpers
   def with_scope(locator)
-    locator ? within(locator) { yield } : yield
+    if locator
+      within(locator, match: :first) do
+        yield
+      end
+    else
+      yield
+    end
   end
 end
 World(WithinHelpers)
@@ -25,9 +29,7 @@ end
 
 When /^(?:|I )press "([^"]*)"(?: within "([^"]*)")?$/ do |button, selector|
   with_scope(selector) do
-    silence_warnings { 
-      sleep 1 if button == "Share"
-      click_button(button) } # ruby 1.9 produces a warning about UTF8 from rack-util
+    click_button(button)
   end
 end
 
@@ -92,9 +94,10 @@ When /^(?:|I )choose "([^"]*)"(?: within "([^"]*)")?$/ do |field, selector|
   end
 end
 
-When /^(?:|I )attach the file "([^"]*)" to "([^"]*)"(?: within "([^"]*)")?$/ do |path, field, selector|
+When /^(?:|I )attach the file "([^"]*)" to (?:hidden )?"([^"]*)"(?: within "([^"]*)")?$/ do |path, field, selector|
   with_scope(selector) do
-    attach_file(field, path)
+    page.execute_script("$(\"input[name='#{field}']\").css('opacity', '1');")
+    attach_file(field, Rails.root.join(path).to_s)
   end
 end
 
@@ -105,14 +108,10 @@ Then /^(?:|I )should see JSON:$/ do |expected_json|
   expected.should == actual
 end
 
-Then /^(?:|I )should see (\".+?\"[\s]*)(?:[\s]+within[\s]* "([^"]*)")?$/ do |vars,selector|
+Then /^(?:|I )should see (\".+?\"[\s]*)(?:[\s]+within[\s]* "([^"]*)")?$/ do |vars, selector|
   vars.scan(/"([^"]+?)"/).flatten.each do |text|
     with_scope(selector) do
-      if page.respond_to? :should
-        page.should have_content(text)
-      else
-        assert page.has_content?(text)
-      end
+      current_scope.should have_content(text)
     end
   end
 end
@@ -198,16 +197,8 @@ Then /^the "([^"]*)" checkbox(?: within "([^"]*)")? should not be checked$/ do |
 end
 
 Then /^(?:|I )should be on (.+)$/ do |page_name|
-  wait_until(3) do
-    current_path = URI.parse(current_url).path
-    current_path == path_to(page_name)
-  end
-
-  if current_path.respond_to? :should
-    current_path.should == path_to(page_name)
-  else
-    assert_equal path_to(page_name), current_path
-  end
+  current_path = URI.parse(current_url).path
+  current_path.should == path_to(page_name)
 end
 
 Then /^(?:|I )should have the following query string:$/ do |expected_pairs|

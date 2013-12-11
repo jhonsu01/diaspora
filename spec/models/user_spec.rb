@@ -466,7 +466,7 @@ describe User do
     end
 
     it 'dispatches the profile when tags are set' do
-      @params = {:tags => '#what #hey'}
+      @params = {:tag_string => '#what #hey'}
       mailman = Postzord::Dispatcher.build(alice, Profile.new)
       Postzord::Dispatcher.should_receive(:build).and_return(mailman)
       alice.update_profile(@params).should be_true
@@ -587,22 +587,22 @@ describe User do
       alice.disable_mail = false
       alice.save
 
-      Resque.should_receive(:enqueue).with(Jobs::Mail::StartedSharing, alice.id, 'contactrequestid').once
-      alice.mail(Jobs::Mail::StartedSharing, alice.id, 'contactrequestid')
+      Workers::Mail::StartedSharing.should_receive(:perform_async).with(alice.id, 'contactrequestid').once
+      alice.mail(Workers::Mail::StartedSharing, alice.id, 'contactrequestid')
     end
 
-    it 'does not enqueue a mail job if the correct corresponding job has a prefrence entry' do
+    it 'does not enqueue a mail job if the correct corresponding job has a preference entry' do
       alice.user_preferences.create(:email_type => 'started_sharing')
-      Resque.should_not_receive(:enqueue)
-      alice.mail(Jobs::Mail::StartedSharing, alice.id, 'contactrequestid')
+      Workers::Mail::StartedSharing.should_not_receive(:perform_async)
+      alice.mail(Workers::Mail::StartedSharing, alice.id, 'contactrequestid')
     end
 
     it 'does not send a mail if disable_mail is set to true' do
        alice.disable_mail = true
        alice.save
        alice.reload
-       Resque.should_not_receive(:enqueue)
-      alice.mail(Jobs::Mail::StartedSharing, alice.id, 'contactrequestid')
+       Workers::Mail::StartedSharing.should_not_receive(:perform_async)
+      alice.mail(Workers::Mail::StartedSharing, alice.id, 'contactrequestid')
     end
   end
 
@@ -721,12 +721,12 @@ describe User do
     describe '#mail_confirm_email' do
       it 'enqueues a mail job on user with unconfirmed email' do
         user.update_attribute(:unconfirmed_email, "alice@newmail.com")
-        Resque.should_receive(:enqueue).with(Jobs::Mail::ConfirmEmail, alice.id).once
+        Workers::Mail::ConfirmEmail.should_receive(:perform_async).with(alice.id).once
         alice.mail_confirm_email.should eql(true)
       end
 
       it 'enqueues NO mail job on user without unconfirmed email' do
-        Resque.should_not_receive(:enqueue).with(Jobs::Mail::ConfirmEmail, alice.id)
+        Workers::Mail::ConfirmEmail.should_not_receive(:perform_async).with(alice.id)
         alice.mail_confirm_email.should eql(false)
       end
     end
@@ -818,7 +818,7 @@ describe User do
         @post.reshares << reshare
 
         dispatcher = mock
-        Postzord::Dispatcher.should_receive(:build).with(bob, @retraction, {:additional_subscribers => [person]}).and_return(dispatcher)
+        Postzord::Dispatcher.should_receive(:build).with(bob, @retraction, {:additional_subscribers => [person], :services => anything}).and_return(dispatcher)
         dispatcher.should_receive(:post)
 
         bob.retract(@post)
@@ -843,7 +843,7 @@ describe User do
 
     it "queues up a job to send the reset password instructions" do
       user = FactoryGirl.create :user
-      Resque.should_receive(:enqueue).with(Jobs::ResetPassword, user.id)
+      Workers::ResetPassword.should_receive(:perform_async).with(user.id)
       user.send_reset_password_instructions
     end
   end
@@ -864,26 +864,29 @@ describe User do
       end
     end
 
-    describe "diasporahq sharing" do
+    describe "autofollow sharing" do
       let(:user) {
         FactoryGirl.create(:user)
       }
 
       before(:each) do
-        @old_followhq_value = AppConfig.settings.follow_diasporahq?
+        @old_autofollow_value = AppConfig.settings.autofollow_on_join?
+        @old_autofollow_user = AppConfig.settings.autofollow_on_join_user
       end
 
       after(:each) do
-        AppConfig.settings.follow_diasporahq = @old_followhq_value
+        AppConfig.settings.autofollow_on_join = @old_followhq_value
+        AppConfig.settings.autofollow_on_join_user = @old_autofollow_user
       end
 
-      context "with sharing with diasporahq enabled" do
-        it "should start sharing with the diasporahq account" do
-          AppConfig.settings.follow_diasporahq = true
+      context "with autofollow sharing enabled" do
+        it "should start sharing with autofollow account" do
+          AppConfig.settings.autofollow_on_join = true
+          AppConfig.settings.autofollow_on_join_user = 'one'
 
           wf_mock = mock
           wf_mock.should_receive(:fetch)
-          Webfinger.should_receive(:new).and_return(wf_mock)
+          Webfinger.should_receive(:new).with('one').and_return(wf_mock)
 
           user.seed_aspects
         end
@@ -891,7 +894,7 @@ describe User do
 
       context "with sharing with diasporahq enabled" do
         it "should not start sharing with the diasporahq account" do
-          AppConfig.settings.follow_diasporahq = false
+          AppConfig.settings.autofollow_on_join = false
 
           Webfinger.should_not_receive(:new)
 

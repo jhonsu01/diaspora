@@ -1,4 +1,4 @@
-#   Copyright (c) 2010-2012, Diaspora Inc.  This file is
+#   Copyright (c) 2010-2013, Diaspora Inc.  This file is
 #   licensed under the Affero General Public License version 3 or later.  See
 #   the COPYRIGHT file.
 
@@ -16,6 +16,7 @@ es-AR:
       invalid: "La contraseña o el nombre de usuario introducidos son incorrectos"
       invalid_token: "El identificador de autenticación no es válido."
       locked: "Tu cuenta está bloqueada"
+      not_found_in_database: "Contraseña o e-mail incorrecto."
       timeout: "Tu sesión expiró, por favor conectate de nuevo."
       unauthenticated: "Necesitás conectarte a tu cuenta, o registrarse, para continuar."
       unconfirmed: "Necesitas confirmar tu cuenta antes de continuar."

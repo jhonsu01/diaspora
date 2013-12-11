@@ -7,28 +7,32 @@ class PhotosController < ApplicationController
 
   respond_to :html, :json
 
+  def show
+    @photo = if user_signed_in?
+      current_user.photos_from(Person.find_by_guid(params[:person_id])).where(id: params[:id]).first
+    else
+      Photo.where(id: params[:id], public: true).first
+    end
+
+    raise ActiveRecord::RecordNotFound unless @photo
+  end
+
   def index
     @post_type = :photos
     @person = Person.find_by_guid(params[:person_id])
 
     if @person
-      @profile = @person.profile
       @contact = current_user.contact_for(@person)
-      @is_contact = @person != current_user.person && @contact
-      @aspects_with_person = []
 
       if @contact
-        @aspects_with_person = @contact.aspects
         @contacts_of_contact = @contact.contacts
         @contacts_of_contact_count = @contact.contacts.count
       else
         @contact = Contact.new
-        @contacts_of_contact = []
-        @contacts_of_contact_count = 0
       end
 
       @posts = current_user.photos_from(@person)
-      
+
       respond_to do |format|
         format.all { render 'people/show' }
         format.json{ render_for_api :backbone, :json => @posts, :root => :photos }
@@ -43,7 +47,7 @@ class PhotosController < ApplicationController
   def create
     rescuing_photo_errors do
       if remotipart_submitted?
-        @photo = current_user.build_post(:photo, params[:photo])
+        @photo = current_user.build_post(:photo, photo_params)
         if @photo.save
           respond_to do |format|
             format.json { render :json => {"success" => true, "data" => @photo.as_api_response(:backbone)} }
@@ -116,7 +120,7 @@ class PhotosController < ApplicationController
   def update
     photo = current_user.photos.where(:id => params[:id]).first
     if photo
-      if current_user.update_post( photo, params[:photo] )
+      if current_user.update_post( photo, photo_params )
         flash.now[:notice] = I18n.t 'photos.update.notice'
         respond_to do |format|
           format.js{ render :json => photo, :status => 200 }
@@ -135,6 +139,10 @@ class PhotosController < ApplicationController
 
   private
 
+  def photo_params
+    params.require(:photo).permit(:public, :text, :pending, :user_file, :image_url, :aspect_ids, :set_profile_photo)
+  end
+
   def file_handler(params)
     # For XHR file uploads, request.params[:qqfile] will be the path to the temporary file
     # For regular form uploads (such as those made by Opera), request.params[:qqfile] will be an UploadedFile which can be returned unaltered.
@@ -147,16 +155,9 @@ class PhotosController < ApplicationController
       # get file content type
       att_content_type = (request.content_type.to_s == "") ? "application/octet-stream" : request.content_type.to_s
       # create tempora##l file
-      begin
-        file = Tempfile.new(file_name, {:encoding =>  'BINARY'})
-        file.print request.raw_post.force_encoding('BINARY')
-      rescue RuntimeError => e
-        raise e unless e.message.include?('cannot generate tempfile')
-        file = Tempfile.new(file_name) # Ruby 1.8 compatibility
-        file.binmode
-        file.print request.raw_post
-      end
+      file = Tempfile.new(file_name, {:encoding =>  'BINARY'})
       # put data into this file from raw post request
+      file.print request.raw_post.force_encoding('BINARY')
 
       # create several required methods for this temporal file
       Tempfile.send(:define_method, "content_type") {return att_content_type}

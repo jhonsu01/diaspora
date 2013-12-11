@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20120909053122) do
+ActiveRecord::Schema.define(:version => 20130801063213) do
 
   create_table "account_deletions", :force => true do |t|
     t.string  "diaspora_handle"
@@ -151,6 +151,15 @@ ActiveRecord::Schema.define(:version => 20120909053122) do
   add_index "likes", ["target_id", "author_id", "target_type"], :name => "index_likes_on_target_id_and_author_id_and_target_type", :unique => true
   add_index "likes", ["target_id"], :name => "index_likes_on_post_id"
 
+  create_table "locations", :force => true do |t|
+    t.string   "address"
+    t.string   "lat"
+    t.string   "lng"
+    t.integer  "status_message_id"
+    t.datetime "created_at",        :null => false
+    t.datetime "updated_at",        :null => false
+  end
+
   create_table "mentions", :force => true do |t|
     t.integer "post_id",   :null => false
     t.integer "person_id", :null => false
@@ -205,6 +214,14 @@ ActiveRecord::Schema.define(:version => 20120909053122) do
   end
 
   add_index "o_embed_caches", ["url"], :name => "index_o_embed_caches_on_url", :length => {"url"=>255}
+
+  create_table "open_graph_caches", :force => true do |t|
+    t.string "title"
+    t.string "ob_type"
+    t.string "image"
+    t.string "url"
+    t.text   "description"
+  end
 
   create_table "participations", :force => true do |t|
     t.string   "guid"
@@ -288,7 +305,7 @@ ActiveRecord::Schema.define(:version => 20120909053122) do
     t.string   "provider_display_name"
     t.string   "actor_url"
     t.string   "objectId"
-    t.string   "root_guid",             :limit => 30
+    t.string   "root_guid"
     t.string   "status_message_guid"
     t.integer  "likes_count",                         :default => 0
     t.integer  "comments_count",                      :default => 0
@@ -297,6 +314,10 @@ ActiveRecord::Schema.define(:version => 20120909053122) do
     t.datetime "interacted_at"
     t.string   "frame_name"
     t.boolean  "favorite",                            :default => false
+    t.string   "facebook_id"
+    t.string   "tweet_id"
+    t.text     "tumblr_ids"
+    t.integer  "open_graph_cache_id"
   end
 
   add_index "posts", ["author_id", "root_guid"], :name => "index_posts_on_author_id_and_root_guid", :unique => true
@@ -306,6 +327,7 @@ ActiveRecord::Schema.define(:version => 20120909053122) do
   add_index "posts", ["root_guid"], :name => "index_posts_on_root_guid"
   add_index "posts", ["status_message_guid", "pending"], :name => "index_posts_on_status_message_guid_and_pending"
   add_index "posts", ["status_message_guid"], :name => "index_posts_on_status_message_guid"
+  add_index "posts", ["tweet_id"], :name => "index_posts_on_tweet_id"
   add_index "posts", ["type", "pending", "id"], :name => "index_posts_on_type_and_pending_and_id"
 
   create_table "profiles", :force => true do |t|

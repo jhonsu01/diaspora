@@ -1,7 +1,7 @@
 module DebuggingCukeHelpers
   def start_debugging
-    require 'ruby-debug'
-    debugger
+    require 'pry'
+    binding.pry
     true
   end
 end

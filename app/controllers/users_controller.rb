@@ -3,9 +3,6 @@
 #   the COPYRIGHT file.
 
 class UsersController < ApplicationController
-  require Rails.root.join('lib', 'diaspora', 'exporter')
-  require Rails.root.join('lib', 'collect_user_photos')
-
   before_filter :authenticate_user!, :except => [:new, :create, :public, :user_photo]
 
   respond_to :html
@@ -27,7 +24,7 @@ class UsersController < ApplicationController
     password_changed = false
     @user = current_user
 
-    if u = params[:user]
+    if u = user_params
       u.delete(:password) if u[:password].blank?
       u.delete(:password_confirmation) if u[:password].blank? and u[:password_confirmation].blank?
       u.delete(:language) if u[:language].blank?
@@ -103,7 +100,7 @@ class UsersController < ApplicationController
     if @user = User.find_by_username(params[:username])
       respond_to do |format|
         format.atom do
-          @posts = StatusMessage.where(:author_id => @user.person_id, :public => true).order('created_at DESC').limit(25)
+          @posts = Post.where(:author_id => @user.person_id, :public => true).order('created_at DESC').limit(25)
         end
 
         format.any { redirect_to person_path(@user.person) }
@@ -114,17 +111,22 @@ class UsersController < ApplicationController
   end
 
   def getting_started
-    @aspect   = :getting_started
     @user     = current_user
     @person   = @user.person
     @profile  = @user.profile
 
-    render "users/getting_started"
+    @css_framework = :bootstrap
+    @include_application_css = true #Hack for multiple CSS frameworks and having two main styles
+    respond_to do |format|
+    format.mobile { render "users/getting_started" }
+    format.all { render "users/getting_started", layout: "with_header_with_footer" }
+    end
   end
 
   def getting_started_completed
     user = current_user
-    user.update_attributes(:getting_started => false)
+    user.getting_started = false
+    user.save
     redirect_to stream_path
   end
 
@@ -155,5 +157,34 @@ class UsersController < ApplicationController
       flash[:error] = I18n.t('users.confirm_email.email_not_confirmed')
     end
     redirect_to edit_user_path
+  end
+
+  private
+
+  def user_params
+    params.fetch(:user).permit(
+      :email,
+      :current_password,
+      :password,
+      :password_confirmation,
+      :language,
+      :disable_mail,
+      :invitation_service,
+      :invitation_identifier,
+      :show_community_spotlight_in_stream,
+      :auto_follow_back,
+      :auto_follow_back_aspect_id,
+      :remember_me,
+      :getting_started,
+      email_preferences: [
+        :also_commented,
+        :mentioned,
+        :comment_on_post,
+        :private_message,
+        :started_sharing,
+        :liked,
+        :reshared
+      ]
+    )
   end
 end

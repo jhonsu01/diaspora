@@ -2,11 +2,8 @@
 #   licensed under the Affero General Public License version 3 or later.  See
 #   the COPYRIGHT file.
 
-require Rails.root.join("lib", 'stream', "person")
-
 class PeopleController < ApplicationController
   before_filter :authenticate_user!, :except => [:show, :last_post]
-  before_filter :redirect_if_tag_search, :only => [:index]
 
   respond_to :html, :except => [:tag_index]
   respond_to :json, :only => [:index, :show]
@@ -82,27 +79,19 @@ class PeopleController < ApplicationController
 
     @post_type = :all
     @aspect = :profile
-    @share_with = (params[:share_with] == 'true')
-
     @stream = Stream::Person.new(current_user, @person, :max_time => max_time)
-
     @profile = @person.profile
+    @photos = photos_from(@person)
 
     unless params[:format] == "json" # hovercard
       if current_user
         @block = current_user.blocks.where(:person_id => @person.id).first
         @contact = current_user.contact_for(@person)
-        @aspects_with_person = []
         if @contact && !params[:only_posts]
-          @aspects_with_person = @contact.aspects
-          @aspect_ids = @aspects_with_person.map(&:id)
           @contacts_of_contact_count = @contact.contacts.count
           @contacts_of_contact = @contact.contacts.limit(8)
-
         else
           @contact ||= Contact.new
-          @contacts_of_contact_count = 0
-          @contacts_of_contact = []
         end
       end
     end
@@ -154,9 +143,8 @@ class PeopleController < ApplicationController
       @contact = current_user.contact_for(@person)
       @aspect = :profile
       @contacts_of_contact = @contact.contacts.paginate(:page => params[:page], :per_page => (params[:limit] || 15))
+      @contacts_of_contact_count = @contact.contacts.count
       @hashes = hashes_for_people @contacts_of_contact, @aspects
-      @aspects_with_person = @contact.aspects
-      @aspect_ids = @aspects_with_person.map(&:id)
     else
       flash[:error] = I18n.t 'people.show.does_not_exist'
       redirect_to people_path
@@ -173,18 +161,6 @@ class PeopleController < ApplicationController
 
     @contact = current_user.contact_for(@person) || Contact.new
     render :partial => 'aspect_membership_dropdown', :locals => {:contact => @contact, :person => @person, :hang => 'left'}
-  end
-
-  def redirect_if_tag_search
-    if search_query.starts_with?('#')
-      if search_query.length > 1
-
-        redirect_to tag_path(:name => search_query.delete('#.'))
-      else
-        flash[:error] = I18n.t('tags.show.none', :name => search_query)
-        redirect_to :back
-      end
-    end
   end
 
   private
@@ -213,5 +189,15 @@ class PeopleController < ApplicationController
 
   def remote_profile_with_no_user_session?
     @person.try(:remote?) && !user_signed_in?
+  end
+
+  def photos_from(person)
+    photos = if user_signed_in?
+      current_user.photos_from(person)
+    else
+      Photo.where(author_id: person.id, public: true)
+    end
+
+    photos.order('created_at desc')
   end
 end

@@ -1,6 +1,5 @@
-require Rails.root.join("lib", "publisher")
 class Stream::Base
-  TYPES_OF_POST_IN_STREAM = ['StatusMessage', 'Reshare', 'ActivityStreams::Photo']
+  TYPES_OF_POST_IN_STREAM = ['StatusMessage', 'Reshare']
 
   attr_accessor :max_time, :order, :user, :publisher
 

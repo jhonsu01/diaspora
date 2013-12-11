@@ -20,6 +20,9 @@
 ## - Replace the dots with underscores: environment_s3_enable
 ## - Upcase everything: ENVIRONMENT_S3_ENABLE
 ## - Specify lists/arrays as comma separated values
+##
+## - For example, on Heroku:
+##   heroku config:set SERVICES_FACEBOOK_APP_ID=whateeryourappid SERVICES_FACEBOOK_SECRET=whateeryourappsecret
 
 configuration: ## Section
   
@@ -66,6 +69,35 @@ configuration: ## Section
     ## all the time intensive jobs must be run inside the request cycle.
     ## So this is higly unrecommended for production setups.
     #single_process_mode: true
+
+    ## Sidekiq - background processing
+    sidekiq: ## Section
+      ## Number of parallel threads Sidekiq uses
+      ## If you touch this please set the pool setting
+      ## in your database.yml to a value that's at minimum
+      ## close to this! The default value is 5 but you can safely
+      ## increase it to 25 and more on a medium sized pod.
+      ## This applies per started Sidekiq worker, so if you set it to
+      ## 25 and start two workers you'll process up to 50 jobs in parallel.
+      #concurrency: 25
+
+      ## Number of times a job is retried
+      ## There's an exponential backoff, if you set this too
+      ## high you might get too many jobs in the queue
+      ## Set this to false to disable it completely 
+      #retry: 10
+
+      ## Namespace to use in Redis, useful if you need to run
+      ## multiple instances of Diaspora using the same Redis instance
+      #namespace: "diaspora"
+
+      ## Lines of backtrace that is stored on failure
+      ## Set this to false if you're not interested in this data to
+      ## reduce memory usage (and log size)
+      #backtrace: 15
+
+      ## Log file for Sidekiq
+      #log: "log/sidekiq.log"
     
     ## Use Amazon S3 instead of your local filesystem
     ## to handle uploaded pictures.
@@ -75,6 +107,10 @@ configuration: ## Section
       #secret: 'changeme'
       #bucket: 'my_photos'
       #region: 'us-east-1'
+
+      # Use max-age header on Amazon S3 resources.
+      # this would set a max-age value of 1 year
+      #cache : true
     
     ## Related to S3 you can set a url to redirect all requests to uploaded
     ## images to another host. If you for example set
@@ -116,16 +152,24 @@ configuration: ## Section
     ## Valid choices are 'mysql' and 'postgres'
     #database: 'mysql'
     
-    ## Number of unicorn worker processes, increase this if
+    ## Number of Unicorn worker processes, increase this if
     ## you have many users
     #unicorn_worker: 2
+
+    ## Number of seconds before a request is aborted, increase if
+    ## you get empty responses, or large image uploads fail.
+    ## Decrease if you're under heavy load and don't care for some
+    ## requests to fail.
+    #unicorn_timeout: 90
     
-    ## Embed a resque worker inside the unicorn process, useful for
+    ## Embed a Sidekiq worker inside the unicorn process, useful for
     ## minimal Heroku setups
-    #embed_resque_worker: true
-    
-    ## Number of resque workers to start
-    #resque_workers: 1
+    #embed_sidekiq_worker: true
+
+    ## Number of Sidekiq worker processes
+    ## Most of the time you want to increase
+    ## environment.sidekiq.concurrency instead!
+    #sidekiq_workers: 1
   
   ## Settings probably affecting the privacy of your users 
   privacy: ## Section
@@ -164,22 +208,26 @@ configuration: ## Section
     ## the first registration (you).
     #enable_registrations: true
     
-    ## Set this to false if you don't want your users to follow the
-    ## diasporahq@joindiaspora.com account on account creation.
+    ## Users will automatically follow a specified account on creation
+    ## Set this to false if you don't want your users to automatically
+    ## follow an account upon creation.
+    #autofollow_on_join: true
+ 
     ## The diasporahq account helps users start with some activity in
     ## their stream and get news about Diaspora, but if you don't want
-    ## your server to contact joindiaspora.com, set this to false:
-    #follow_diasporahq: false
+    ## your server to contact joindiaspora.com, you can change account
+    ## below or set autofollow_on_join to false
+    #autofollow_on_join_user: 'diasporahq@joindiaspora.com'
     
     ## Settings about invitations
     invitations: ## Section
       
-      ## Set this to true if you want users to invite as many
-      ## people as they want.
+      ## Set this to true if you want users to be able to send invites.
       #open: true
       
       ## The default amount of invitiations an invite link has.
-      ## Every user has such a link. Only counts if open is false.
+      ## Every user has such a link. Default count is 25, uncomment to set
+      ## another value.
       #count: 25
     
     ## Paypal donations
@@ -187,6 +235,11 @@ configuration: ## Section
     ## your users for donations to run their pod. If you leave this out
     ## we kindly ask your users to donate to the Diaspora Foundation :)
     #paypal_hosted_button_id: ""
+    
+    ## Bitcoin donations
+    ## You can provide the bitcoin address here to kindly ask
+    ## your users for donations to run their pod.
+    #bitcoin_wallet_id: ""
     
     ## Community Spotlight
     ## The community spotlight gives new users a starting point on who
@@ -198,6 +251,12 @@ configuration: ## Section
       ## in the spotlight to.
       #suggest_email: 'admin@example.org'
     
+
+    ## Maximum number of parallel HTTP requests made to other pods
+    ## Be careful, raising this setting will heavily increase the
+    ## memory usage of your Sidekiq workers
+    #typhoeus_concurrency: 20
+
     ## CURL debug
     ## Turn on extra verbose output when sending stuff. No you
     ## don't need to touch this unless explicitly told to.
@@ -277,6 +336,12 @@ configuration: ## Section
       #enable: true
       #key: 'abcdef'
       #secret: 'changeme'
+      
+    ## OAuth credentials for Wordpress
+    wordpress: ## Section
+      #enable: true
+      #client_id: 'abcdef'
+      #secret: 'changeme'
   
   ## Settings relevant to administrators
   admins: ## Section
@@ -289,15 +354,12 @@ configuration: ## Section
 
     ## E-Mail address users can contact the administrator
     #podmin_email: 'podmin@example.org'
-    
-    ## Resque is the background processing system used by Diaspora
-    ## Resque web is an admin tool for it. This settings decides whether
-    ## or not to inline it into Diaspora.
-    #inline_resque_web: true
   
 ## Here you can make overides to settings defined above if you need
 ## to have them different in different environments.
 production: ## Section
+  environment: ## Section
+    #redis_url: 'redis://production.example.org:6379'
   
 development: ## Section
   environment: ## Section
