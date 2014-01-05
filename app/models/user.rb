@@ -12,6 +12,7 @@ class User < ActiveRecord::Base
   scope :monthly_actives, lambda { |time = Time.now| logged_in_since(time - 1.month) }
   scope :daily_actives, lambda { |time = Time.now| logged_in_since(time - 1.day) }
   scope :yearly_actives, lambda { |time = Time.now| logged_in_since(time - 1.year) }
+  scope :halfyear_actives, lambda { |time = Time.now| logged_in_since(time - 6.month) }
 
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :trackable, :validatable,
@@ -60,6 +61,9 @@ class User < ActiveRecord::Base
 
   has_many :blocks
   has_many :ignored_people, :through => :blocks, :source => :person
+
+  has_many :conversation_visibilities, through: :person, order: 'updated_at DESC'
+  has_many :conversations, through: :conversation_visibilities, order: 'updated_at DESC'
 
   has_many :notifications, :foreign_key => :recipient_id
 
@@ -338,7 +342,7 @@ class User < ActiveRecord::Base
 
   def update_profile_with_omniauth( user_info )
     update_profile( self.profile.from_omniauth_hash( user_info ) )
-  end 
+  end
 
   def deliver_profile_update
     Postzord::Dispatcher.build(self, profile).post

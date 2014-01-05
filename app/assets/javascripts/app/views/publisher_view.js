@@ -3,15 +3,13 @@
  *   the COPYRIGHT file.
  */
 
-//= require ./publisher/services
-//= require ./publisher/aspects_selector
-//= require ./publisher/getting_started
+//= require ./publisher/services_view
+//= require ./publisher/aspect_selector_view
+//= require ./publisher/getting_started_view
+//= require ./publisher/uploader_view
 //= require jquery.textchange
 
-app.views.Publisher = Backbone.View.extend(_.extend(
-  app.views.PublisherServices,
-  app.views.PublisherAspectsSelector,
-  app.views.PublisherGettingStarted, {
+app.views.Publisher = Backbone.View.extend({
 
   el : "#publisher",
 
@@ -21,15 +19,11 @@ app.views.Publisher = Backbone.View.extend(_.extend(
     "click #hide_publisher" : "clear",
     "submit form" : "createStatusMessage",
     "click .post_preview_button" : "createPostPreview",
-    "click .service_icon": "toggleService",
     "textchange #status_message_fake_text": "handleTextchange",
-    "click .dropdown .dropdown_list li": "toggleAspect",
     "click #locator" : "showLocation",
     "click #hide_location" : "destroyLocation",
     "keypress #location_address" : "avoidEnter"
   },
-
-  tooltipSelector: ".service_icon",
 
   initialize : function(){
     // init shortcut references to the various elements
@@ -45,9 +39,6 @@ app.views.Publisher = Backbone.View.extend(_.extend(
 
     // init autoresize plugin
     this.el_input.autoResize({ 'extraSpace' : 10, 'maxHeight' : Infinity });
-
-    // init tooltip plugin
-    this.$(this.tooltipSelector).tooltip();
 
     // sync textarea content
     if( this.el_hiddenInput.val() == "" ) {
@@ -73,8 +64,47 @@ app.views.Publisher = Backbone.View.extend(_.extend(
         }
     });
 
+    this.initSubviews();
 
     return this;
+  },
+
+  initSubviews: function() {
+    var form = this.$('.content_creation form');
+
+    this.view_services = new app.views.PublisherServices({
+      el:    this.$('#publisher_service_icons'),
+      input: this.el_input,
+      form:  form
+    });
+
+    this.view_aspect_selector = new app.views.PublisherAspectSelector({
+      el: this.$('.public_toggle > .dropdown'),
+      form: form
+    });
+
+    this.view_getting_started = new app.views.PublisherGettingStarted({
+      el_first_msg:  this.el_input,
+      el_visibility: this.$('.public_toggle > .dropdown'),
+      el_stream:     $('#gs-shim')
+    });
+
+    this.view_uploader = new app.views.PublisherUploader({
+      el: this.$('#file-upload'),
+      publisher: this
+    });
+    this.view_uploader.on('change', this.checkSubmitAvailability, this);
+
+  },
+
+  // set the selected aspects in the dropdown by their ids
+  setSelectedAspects: function(ids) {
+    this.view_aspect_selector.updateAspectsSelector(ids);
+  },
+
+  // show the "getting started" popups around the publisher
+  triggerGettingStarted: function() {
+    this.view_getting_started.show();
   },
 
   createStatusMessage : function(evt) {
@@ -104,7 +134,7 @@ app.views.Publisher = Backbone.View.extend(_.extend(
           $(app.publisher.el).trigger('ajax:success');
         }
         if(app.stream) {
-          app.stream.items.add(statusMessage.toJSON());
+          app.stream.addNow(statusMessage.toJSON());
         }
       }
     });
@@ -120,14 +150,15 @@ app.views.Publisher = Backbone.View.extend(_.extend(
   showLocation: function(){
     if($('#location').length == 0){
       $('#publisher_textarea_wrapper').after('<div id="location"></div>');
-      app.views.location = new app.views.Location();
+      this.view_locator = new app.views.Location();
     }
   },
 
   // destroys the location
   destroyLocation: function(){
-    if(app.views.location){
-      app.views.location.remove();
+    if(this.view_locator){
+      this.view_locator.remove();
+      delete this.view_locator;
     }
   },
 
@@ -160,7 +191,7 @@ app.views.Publisher = Backbone.View.extend(_.extend(
     });
 
     var mentioned_people = new Array();
-    var regexp = new RegExp("@{\(\.\*\) ; \(\.\*\)}", "g");
+    var regexp = new RegExp("@{\(\[\^\;\]\+\); \(\[\^\}\]\+\)}", "g");
     while(user=regexp.exec(serializedForm["status_message[text]"])){
       // user[1]: name, user[2]: handle
       var mentioned_user = Mentions.contacts.filter(function(item) { return item.handle == user[2];})[0];
@@ -194,7 +225,7 @@ app.views.Publisher = Backbone.View.extend(_.extend(
 
     if(app.stream) {
       this.removePostPreview();
-      app.stream.items.add(previewMessage);
+      app.stream.addNow(previewMessage);
       this.recentPreview=previewMessage;
       this.modifyPostPreview($('.stream_element:first',$('.stream_container')));
     }
@@ -260,11 +291,11 @@ app.views.Publisher = Backbone.View.extend(_.extend(
   },
 
   tryClose : function(){
-    // if it is not submittable, close it. 
+    // if it is not submittable, close it.
     if( !this._submittable() ){
       this.close()
     }
-  },  
+  },
 
   open : function() {
     // visually 'open' the publisher
@@ -286,12 +317,16 @@ app.views.Publisher = Backbone.View.extend(_.extend(
 
   checkSubmitAvailability: function() {
     if( this._submittable() ) {
-      this.el_submit.removeAttr('disabled');
-      this.el_preview.removeAttr('disabled');
+      this.setButtonsEnabled(true);
     } else {
-      this.el_submit.attr('disabled','disabled');
-      this.el_preview.attr('disabled','disabled');
+      this.setButtonsEnabled(false);
     }
+  },
+
+  setButtonsEnabled: function(bool) {
+    bool = !bool;
+    this.el_submit.prop({disabled: bool});
+    this.el_preview.prop({disabled: bool});
   },
 
   // determine submit availability
@@ -311,7 +346,7 @@ app.views.Publisher = Backbone.View.extend(_.extend(
     });
   }
 
-}));
+});
 
 // jQuery helper for serializing a <form> into JSON
 $.fn.serializeObject = function()
